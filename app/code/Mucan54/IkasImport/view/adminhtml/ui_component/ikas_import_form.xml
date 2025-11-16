@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Mucan54. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">ikas_import_form.ikas_import_form_data_source</item>
+        </item>
+        <item name="label" xsi:type="string" translate="true">Ikas Product Import</item>
+        <item name="template" xsi:type="string">templates/form/collapsible</item>
+    </argument>
+    <settings>
+        <buttons>
+            <button name="import" class="Mucan54\IkasImport\Block\Adminhtml\Import\ImportButton"/>
+        </buttons>
+        <namespace>ikas_import_form</namespace>
+        <dataScope>data</dataScope>
+    </settings>
+    <dataSource name="ikas_import_form_data_source">
+        <argument name="data" xsi:type="array">
+            <item name="js_config" xsi:type="array">
+                <item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
+            </item>
+        </argument>
+        <dataProvider class="Mucan54\IkasImport\Model\Import\DataProvider"
+                      name="ikas_import_form_data_source">
+            <settings>
+                <requestFieldName>id</requestFieldName>
+                <primaryFieldName>id</primaryFieldName>
+            </settings>
+        </dataProvider>
+    </dataSource>
+    <fieldset name="general">
+        <settings>
+            <label translate="true">Import Settings</label>
+        </settings>
+        <field name="csv_file" formElement="fileUploader">
+            <settings>
+                <label translate="true">CSV File</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+            <formElements>
+                <fileUploader>
+                    <settings>
+                        <uploaderConfig>
+                            <param xsi:type="string" name="url">ikasimport/import/upload</param>
+                        </uploaderConfig>
+                        <allowedExtensions>csv</allowedExtensions>
+                        <maxFileSize>10485760</maxFileSize>
+                    </settings>
+                </fileUploader>
+            </formElements>
+        </field>
+        <field name="batch_size" formElement="input">
+            <settings>
+                <label translate="true">Batch Size</label>
+                <notice translate="true">Number of products to process in each batch</notice>
+                <dataType>text</dataType>
+                <validation>
+                    <rule name="validate-number" xsi:type="boolean">true</rule>
+                    <rule name="validate-zero-or-greater" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
+        <field name="use_queue" formElement="checkbox">
+            <settings>
+                <label translate="true">Use Queue</label>
+                <notice translate="true">Process import asynchronously using queue</notice>
+                <dataType>boolean</dataType>
+            </settings>
+            <formElements>
+                <checkbox>
+                    <settings>
+                        <valueMap>
+                            <map name="false" xsi:type="number">0</map>
+                            <map name="true" xsi:type="number">1</map>
+                        </valueMap>
+                        <prefer>toggle</prefer>
+                    </settings>
+                </checkbox>
+            </formElements>
+        </field>
+    </fieldset>
+</form>

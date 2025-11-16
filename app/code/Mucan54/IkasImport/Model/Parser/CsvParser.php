@@ -106,7 +106,8 @@ class CsvParser implements ParserInterface
 
             $this->logger->logImport('CSV parsing started', [
                 'file' => $filePath,
-                'headers_count' => count($this->headers)
+                'headers_count' => count($this->headers),
+                'headers' => $this->headers
             ]);
 
             $rowNumber = 1;
@@ -123,13 +124,23 @@ class CsvParser implements ParserInterface
                     $this->logger->warning("Row {$rowNumber}: Column count mismatch", [
                         'expected' => count($this->headers),
                         'actual' => count($data),
-                        'row' => $rowNumber
+                        'row' => $rowNumber,
+                        'headers' => $this->headers,
+                        'data' => $data
                     ]);
                     continue;
                 }
 
                 // Combine headers with data
                 $row = array_combine($this->headers, $data);
+                
+                // Debug log for first few rows
+                if ($rowNumber <= 3) {
+                    $this->logger->logImport("Parsed row {$rowNumber}", [
+                        'row' => $row,
+                        'sku_value' => $row['SKU'] ?? 'NOT_FOUND'
+                    ]);
+                }
 
                 // Convert to UTF-8 if needed
                 $row = $this->ensureUtf8($row);
@@ -299,6 +310,24 @@ class CsvParser implements ParserInterface
     {
         $sku = $this->getValue($row, 'SKU');
         $name = $this->getValue($row, 'İsim');
+        
+        // If SKU is invalid or numeric, generate one from name/row
+        if (empty($sku) || !preg_match('/^[a-zA-Z0-9_-]+$/', $sku)) {
+            $originalSku = $sku;
+            // Try to generate SKU from name
+            if (!empty($name)) {
+                $sku = $this->generateSkuFromName($name, $rowNumber);
+            } else {
+                $sku = 'PRODUCT-' . str_pad($rowNumber, 6, '0', STR_PAD_LEFT);
+            }
+            
+            $this->logger->logImport("Generated SKU for row {$rowNumber}", [
+                'original_sku' => $originalSku,
+                'generated_sku' => $sku,
+                'name' => $name
+            ]);
+        }
+        
         $description = $this->getValue($row, 'Açıklama');
         $price = $this->parseFloat($this->getValue($row, 'Satış Fiyatı'));
         $specialPrice = $this->parseFloat($this->getValue($row, 'İndirimli Fiyatı'));
@@ -315,8 +344,26 @@ class CsvParser implements ParserInterface
             $attributes = $this->attributeParser->parse($description);
         }
 
-        // Determine status based on Varyant Aktiflik
-        $status = ($isActive === 'Aktif' || $isActive === '1') ? 1 : 2;
+        // Determine status based on Varyant Aktiflik - default to ENABLED if not explicitly disabled
+        $status = 1; // Default to Enabled
+        if (!empty($isActive)) {
+            // Only disable if explicitly set to "Pasif" or "0"
+            if ($isActive === 'Pasif' || $isActive === '0' || strtolower($isActive) === 'disabled') {
+                $status = 2; // Disabled
+            }
+        }
+
+        // Log stock for debugging
+        if ($rowNumber <= 5) {
+            $this->logger->logImport("Product data prepared", [
+                'row' => $rowNumber,
+                'sku' => $sku,
+                'stock_qty' => $stock,
+                'stock_type' => gettype($stock),
+                'status' => $status,
+                'is_active' => $isActive
+            ]);
+        }
 
         return [
             'row_number' => $rowNumber,
@@ -335,6 +382,61 @@ class CsvParser implements ParserInterface
             'url_key' => $slug,
             'visibility' => 4, // Catalog, Search
         ];
+    }
+
+    /**
+     * Generate SKU from product name
+     *
+     * @param string $name
+     * @param int $rowNumber
+     * @return string
+     */
+    private function generateSkuFromName(string $name, int $rowNumber): string
+    {
+        // Remove Turkish characters and special chars
+        $sku = $this->transliterate($name);
+        
+        // Keep only alphanumeric and replace spaces with hyphens
+        $sku = preg_replace('/[^a-zA-Z0-9]+/', '-', $sku);
+        
+        // Remove leading/trailing hyphens
+        $sku = trim($sku, '-');
+        
+        // Convert to uppercase
+        $sku = strtoupper($sku);
+        
+        // If SKU is empty after cleaning, use generic prefix
+        if (empty($sku)) {
+            $sku = 'PRODUCT';
+        }
+        
+        // Create a hash from the original name for additional uniqueness
+        // This ensures even identical names get different SKUs
+        $hash = substr(md5($name . $rowNumber . microtime(true)), 0, 6);
+        
+        // Limit base SKU to 40 chars to leave room for row number and hash
+        if (strlen($sku) > 40) {
+            $sku = substr($sku, 0, 40);
+        }
+        
+        // Combine: BASE-ROWNUMBER-HASH for guaranteed uniqueness
+        $sku = $sku . '-' . str_pad((string)$rowNumber, 4, '0', STR_PAD_LEFT) . '-' . strtoupper($hash);
+        
+        return $sku;
+    }
+
+    /**
+     * Transliterate Turkish characters to ASCII
+     *
+     * @param string $text
+     * @return string
+     */
+    private function transliterate(string $text): string
+    {
+        $turkishChars = ['ı', 'ğ', 'ü', 'ş', 'ö', 'ç', 'İ', 'Ğ', 'Ü', 'Ş', 'Ö', 'Ç'];
+        $asciiChars = ['i', 'g', 'u', 's', 'o', 'c', 'I', 'G', 'U', 'S', 'O', 'C'];
+        
+        return str_replace($turkishChars, $asciiChars, $text);
     }
 
     /**

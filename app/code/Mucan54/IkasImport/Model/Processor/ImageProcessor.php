@@ -235,7 +235,7 @@ class ImageProcessor implements ProcessorInterface
             // Save file
             file_put_contents($filepath, $imageContent);
 
-            // Validate MIME type
+            // Validate MIME type and convert WebP to JPG if needed
             $mimeType = mime_content_type($filepath);
             if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'])) {
                 $this->logger->logError('Invalid image MIME type', [
@@ -244,6 +244,25 @@ class ImageProcessor implements ProcessorInterface
                 ]);
                 unlink($filepath);
                 return null;
+            }
+
+            // Convert WebP to JPG (Magento doesn't fully support WebP in product gallery)
+            if ($mimeType === 'image/webp' || $extension === 'webp') {
+                $convertedPath = $this->convertWebpToJpg($filepath);
+                if ($convertedPath) {
+                    // Delete original WebP file
+                    if (file_exists($filepath)) {
+                        unlink($filepath);
+                    }
+                    return $convertedPath;
+                } else {
+                    $this->logger->logError('Failed to convert WebP to JPG', [
+                        'url' => $url,
+                        'file' => $filepath
+                    ]);
+                    unlink($filepath);
+                    return null;
+                }
             }
 
             return $filepath;
@@ -274,6 +293,62 @@ class ImageProcessor implements ProcessorInterface
         }
 
         return $extension ?: 'jpg';
+    }
+
+    /**
+     * Convert WebP image to JPG format
+     *
+     * @param string $webpPath Path to WebP file
+     * @return string|null Path to converted JPG file or null on failure
+     */
+    private function convertWebpToJpg(string $webpPath): ?string
+    {
+        try {
+            // Check if GD library supports WebP
+            if (!function_exists('imagecreatefromwebp')) {
+                $this->logger->logError('GD library does not support WebP. Please install php-gd with WebP support.');
+                return null;
+            }
+
+            // Load WebP image
+            $image = @imagecreatefromwebp($webpPath);
+            if (!$image) {
+                $this->logger->logError('Failed to load WebP image', ['file' => $webpPath]);
+                return null;
+            }
+
+            // Create JPG filename
+            $jpgPath = preg_replace('/\.webp$/i', '.jpg', $webpPath);
+            if ($jpgPath === $webpPath) {
+                $jpgPath = $webpPath . '.jpg';
+            }
+
+            // Convert to JPG with quality from config
+            $quality = $this->config->getImageQuality() ?: 85;
+            $success = imagejpeg($image, $jpgPath, $quality);
+            
+            // Free memory
+            imagedestroy($image);
+
+            if (!$success) {
+                $this->logger->logError('Failed to save converted JPG', ['file' => $jpgPath]);
+                return null;
+            }
+
+            $this->logger->logImport('WebP image converted to JPG', [
+                'original' => basename($webpPath),
+                'converted' => basename($jpgPath)
+            ]);
+
+            return $jpgPath;
+
+        } catch (\Exception $e) {
+            $this->logger->logError('Exception during WebP conversion', [
+                'file' => $webpPath,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
     }
 
     /**

@@ -142,7 +142,7 @@ class CategoryProcessor implements ProcessorInterface
         }
 
         // Get root category ID
-        $rootCategoryId = $this->storeManager->getStore()->getRootCategoryId();
+        $rootCategoryId = (int)$this->storeManager->getStore()->getRootCategoryId();
         $parentId = $rootCategoryId;
 
         // Create/get each level of the hierarchy

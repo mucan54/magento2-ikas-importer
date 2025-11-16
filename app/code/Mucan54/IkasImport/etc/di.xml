@@ -66,4 +66,22 @@
             <argument name="cache" xsi:type="array"/>
         </arguments>
     </type>
+
+    <!-- Stock Processor with MSI Support -->
+    <type name="Mucan54\IkasImport\Model\Processor\StockProcessor">
+        <arguments>
+            <argument name="sourceItemsSave" xsi:type="object">Magento\InventoryApi\Api\SourceItemsSaveInterface\Proxy</argument>
+            <argument name="sourceItemFactory" xsi:type="object">Magento\InventoryApi\Api\Data\SourceItemInterfaceFactory</argument>
+            <argument name="getSourceItemsBySku" xsi:type="object">Magento\InventoryApi\Api\GetSourceItemsBySkuInterface\Proxy</argument>
+        </arguments>
+    </type>
+
+    <!-- Import Form Data Provider -->
+    <type name="Mucan54\IkasImport\Model\Import\DataProvider">
+        <arguments>
+            <argument name="name" xsi:type="string">ikas_import_form_data_source</argument>
+            <argument name="primaryFieldName" xsi:type="string">id</argument>
+            <argument name="requestFieldName" xsi:type="string">id</argument>
+        </arguments>
+    </type>
 </config>

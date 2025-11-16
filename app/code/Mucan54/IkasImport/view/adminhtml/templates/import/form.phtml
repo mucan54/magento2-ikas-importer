@@ -1,0 +1,184 @@
+<?php
+/**
+ * Copyright © Mucan54. All rights reserved.
+ * See COPYING.txt for license details.
+ * 
+ * @var \Mucan54\IkasImport\Block\Adminhtml\Import\Form $block
+ */
+?>
+<?php
+$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+$importStatus = $objectManager->get(\Mucan54\IkasImport\Model\ImportStatus::class);
+$status = $importStatus->getStatus();
+$isRunning = $importStatus->isRunning();
+?>
+
+<?php if ($status): ?>
+<div class="message message-<?= $status['status'] === 'running' ? 'notice' : ($status['status'] === 'completed' ? 'success' : 'error') ?>">
+    <strong><?= $block->escapeHtml(__('Import Status:')) ?></strong><br/>
+    <?= $block->escapeHtml($importStatus->getStatusMessage()) ?>
+</div>
+<?php endif; ?>
+
+<div class="page-main-actions">
+    <div class="page-actions">
+        <button type="button" 
+                class="action-default scalable save primary" 
+                id="import-button"
+                <?= $isRunning ? 'disabled="disabled"' : '' ?>>
+            <span><?= $block->escapeHtml(__('Start Import')) ?></span>
+        </button>
+        <?php if ($isRunning): ?>
+        <button type="button" 
+                class="action-default scalable" 
+                onclick="location.reload();">
+            <span><?= $block->escapeHtml(__('Refresh Status')) ?></span>
+        </button>
+        <?php endif; ?>
+    </div>
+</div>
+
+<div class="admin__page-section">
+    <div class="admin__page-section-title">
+        <span class="title"><?= $block->escapeHtml(__('Import Settings')) ?></span>
+    </div>
+    <div class="admin__page-section-content">
+        <form id="import-form" 
+              action="<?= $block->escapeUrl($block->getFormAction()) ?>" 
+              method="post" 
+              enctype="multipart/form-data"
+              class="admin__form">
+            <?= $block->getBlockHtml('formkey') ?>
+            
+            <div class="admin__field field-csv_file required">
+                <label class="admin__field-label" for="csv_file">
+                    <span><?= $block->escapeHtml(__('CSV File')) ?></span>
+                </label>
+                <div class="admin__field-control">
+                    <input type="file" 
+                           name="csv_file" 
+                           id="csv_file" 
+                           class="admin__control-text" 
+                           accept=".csv"
+                           required="required"/>
+                    <div class="admin__field-note">
+                        <span><?= $block->escapeHtml(__('Select the CSV file containing product data')) ?></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin__field field-batch_size">
+                <label class="admin__field-label" for="batch_size">
+                    <span><?= $block->escapeHtml(__('Batch Size')) ?></span>
+                </label>
+                <div class="admin__field-control">
+                    <input type="number" 
+                           name="batch_size" 
+                           id="batch_size" 
+                           class="admin__control-text" 
+                           value="100"
+                           min="1"/>
+                    <div class="admin__field-note">
+                        <span><?= $block->escapeHtml(__('Number of products to process in each batch')) ?></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin__field field-use_queue">
+                <label class="admin__field-label" for="use_queue">
+                    <span><?= $block->escapeHtml(__('Use Queue')) ?></span>
+                </label>
+                <div class="admin__field-control">
+                    <select name="use_queue" id="use_queue" class="admin__control-select">
+                        <option value="0"><?= $block->escapeHtml(__('No')) ?></option>
+                        <option value="1" selected="selected"><?= $block->escapeHtml(__('Yes')) ?></option>
+                    </select>
+                    <div class="admin__field-note">
+                        <span><?= $block->escapeHtml(__('Process import asynchronously using queue')) ?></span>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+require([
+    'jquery',
+    'Magento_Ui/js/modal/alert',
+    'mage/translate'
+], function ($, alert, $t) {
+    'use strict';
+    
+    $('#import-button').on('click', function() {
+        var form = $('#import-form');
+        
+        // Validate form
+        if (!form[0].checkValidity()) {
+            form[0].reportValidity();
+            return false;
+        }
+        
+        // Check if file is selected
+        var fileInput = $('#csv_file')[0];
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert({
+                title: $t('Error'),
+                content: $t('Please select a CSV file to import.')
+            });
+            return false;
+        }
+        
+        // Check file extension
+        var fileName = fileInput.files[0].name;
+        if (!fileName.toLowerCase().endsWith('.csv')) {
+            alert({
+                title: $t('Error'),
+                content: $t('Please select a valid CSV file.')
+            });
+            return false;
+        }
+        
+        // Disable button and submit form
+        $(this).prop('disabled', true).addClass('disabled');
+        form.submit();
+    });
+});
+</script>
+
+<style>
+    .admin__page-section {
+        margin-bottom: 2rem;
+    }
+    
+    .admin__page-section-title {
+        border-bottom: 1px solid #e3e3e3;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .admin__page-section-title .title {
+        font-size: 1.8rem;
+        font-weight: 600;
+    }
+    
+    .admin__field {
+        margin-bottom: 2rem;
+    }
+    
+    .admin__field-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .admin__field-note {
+        margin-top: 0.5rem;
+        font-size: 1.2rem;
+        color: #666;
+    }
+    
+    .page-main-actions {
+        margin-bottom: 2rem;
+    }
+</style>

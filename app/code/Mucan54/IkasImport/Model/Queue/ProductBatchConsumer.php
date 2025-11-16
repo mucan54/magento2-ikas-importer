@@ -11,6 +11,8 @@ use Magento\Framework\Serialize\SerializerInterface;
 use Mucan54\IkasImport\Model\Logger\Logger;
 use Mucan54\IkasImport\Model\Processor\ProductProcessor;
 use Mucan54\IkasImport\Model\Queue\Publisher;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Framework\Indexer\IndexerRegistry;
 
 /**
  * Product batch consumer
@@ -41,21 +43,37 @@ class ProductBatchConsumer
     private $publisher;
 
     /**
+     * @var ProductRepositoryInterface
+     */
+    private $productRepository;
+
+    /**
+     * @var IndexerRegistry
+     */
+    private $indexerRegistry;
+
+    /**
      * @param SerializerInterface $serializer
      * @param Logger $logger
      * @param ProductProcessor $productProcessor
      * @param Publisher $publisher
+     * @param ProductRepositoryInterface $productRepository
+     * @param IndexerRegistry $indexerRegistry
      */
     public function __construct(
         SerializerInterface $serializer,
         Logger $logger,
         ProductProcessor $productProcessor,
-        Publisher $publisher
+        Publisher $publisher,
+        ProductRepositoryInterface $productRepository,
+        IndexerRegistry $indexerRegistry
     ) {
         $this->serializer = $serializer;
         $this->logger = $logger;
         $this->productProcessor = $productProcessor;
         $this->publisher = $publisher;
+        $this->productRepository = $productRepository;
+        $this->indexerRegistry = $indexerRegistry;
     }
 
     /**
@@ -86,16 +104,46 @@ class ProductBatchConsumer
                     // Process product (create/update)
                     $result = $this->productProcessor->process($productData);
 
-                    if ($result && isset($productData['product_id'])) {
+                    if ($result) {
                         $successCount++;
 
-                        // If product has images, publish to image queue
-                        if (!empty($productData['images'])) {
-                            $this->publisher->publishProductImages(
-                                $productData['product_id'],
-                                $productData['sku'],
-                                $productData['images']
-                            );
+                        // Invalidate inventory index for this product
+                        try {
+                            $indexer = $this->indexerRegistry->get('cataloginventory_stock');
+                            if (!$indexer->isScheduled()) {
+                                $indexer->invalidate();
+                            }
+                        } catch (\Exception $e) {
+                            // Log but don't fail if indexer invalidation fails
+                            $this->logger->logError('Failed to invalidate inventory index', [
+                                'sku' => $productData['sku'] ?? 'unknown',
+                                'error' => $e->getMessage()
+                            ]);
+                        }
+
+                        // Resolve product id (productProcessor saved the product)
+                        $productId = $this->productProcessor->getProductIdBySku($productData['sku'] ?? '');
+
+                        // If product has images and we have a product id, verify product exists and publish to image queue
+                        if ($productId && !empty($productData['images'])) {
+                            // Verify product is actually saved and accessible before publishing image job
+                            try {
+                                $product = $this->productRepository->getById($productId);
+                                
+                                // Product exists, safe to publish image job
+                                $this->publisher->publishProductImages(
+                                    $productId,
+                                    $productData['sku'],
+                                    $productData['images']
+                                );
+                            } catch (\Exception $e) {
+                                // Product not found yet, log but don't fail the batch
+                                $this->logger->logError('Product not accessible for image import', [
+                                    'product_id' => $productId,
+                                    'sku' => $productData['sku'] ?? 'unknown',
+                                    'error' => $e->getMessage()
+                                ]);
+                            }
                         }
                     } else {
                         $errorCount++;
