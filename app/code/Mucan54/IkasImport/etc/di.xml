@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Mucan54. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <!-- Interface Preferences -->
+    <preference for="Mucan54\IkasImport\Api\Data\ImportResultInterface"
+                type="Mucan54\IkasImport\Model\ImportResult"/>
+    <preference for="Mucan54\IkasImport\Api\Data\ValidationResultInterface"
+                type="Mucan54\IkasImport\Model\ValidationResult"/>
+    <preference for="Mucan54\IkasImport\Api\Data\ProductDataInterface"
+                type="Mucan54\IkasImport\Model\ProductData"/>
+    <preference for="Mucan54\IkasImport\Api\ParserInterface"
+                type="Mucan54\IkasImport\Model\Parser\CsvParser"/>
+    <preference for="Mucan54\IkasImport\Api\ValidatorInterface"
+                type="Mucan54\IkasImport\Model\Validator\ProductDataValidator"/>
+
+    <!-- Custom Logger -->
+    <type name="Mucan54\IkasImport\Model\Logger\Handler">
+        <arguments>
+            <argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
+        </arguments>
+    </type>
+
+    <type name="Mucan54\IkasImport\Model\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">IkasImport</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="system" xsi:type="object">Mucan54\IkasImport\Model\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Processors Pool -->
+    <type name="Mucan54\IkasImport\Model\ProcessorPool">
+        <arguments>
+            <argument name="processors" xsi:type="array">
+                <item name="stock" xsi:type="object">Mucan54\IkasImport\Model\Processor\StockProcessor</item>
+                <item name="category" xsi:type="object">Mucan54\IkasImport\Model\Processor\CategoryProcessor</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Console Commands -->
+    <type name="Magento\Framework\Console\CommandListInterface">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="ikas_import_run" xsi:type="object">Mucan54\IkasImport\Console\Command\ImportCommand</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Cache Management -->
+    <type name="Mucan54\IkasImport\Model\Cache\CategoryCache">
+        <arguments>
+            <argument name="cache" xsi:type="array"/>
+        </arguments>
+    </type>
+
+    <type name="Mucan54\IkasImport\Model\Cache\AttributeCache">
+        <arguments>
+            <argument name="cache" xsi:type="array"/>
+        </arguments>
+    </type>
+</config>

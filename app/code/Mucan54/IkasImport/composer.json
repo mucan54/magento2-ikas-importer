@@ -1,0 +1,43 @@
+{
+    "name": "mucan54/magento2-ikas-importer",
+    "description": "Professional, extensible Magento 2 module for importing products from Ikas e-commerce platform",
+    "type": "magento2-module",
+    "version": "1.0.0",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Mucan54",
+            "email": "info@mucan54.com"
+        }
+    ],
+    "require": {
+        "php": "^7.4|^8.0|^8.1",
+        "magento/framework": "^102.0|^103.0",
+        "magento/module-catalog": "^104.0",
+        "magento/module-catalog-inventory": "^100.4",
+        "magento/module-eav": "^102.1",
+        "magento/module-store": "^101.1",
+        "magento/module-backend": "^102.0"
+    },
+    "suggest": {
+        "magento/module-inventory-api": "For Multi Source Inventory (MSI) support",
+        "magento/module-amqp": "For RabbitMQ queue support"
+    },
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Mucan54\\IkasImport\\": ""
+        }
+    },
+    "keywords": [
+        "magento2",
+        "ikas",
+        "import",
+        "product-import",
+        "csv-import",
+        "turkish",
+        "e-commerce"
+    ]
+}

@@ -1,0 +1,262 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Mucan54. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="ikas" translate="label" sortOrder="400">
+            <label>Ikas Import</label>
+        </tab>
+        <section id="ikas_import" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>Configuration</label>
+            <tab>ikas</tab>
+            <resource>Mucan54_IkasImport::config</resource>
+
+            <!-- General Settings -->
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>General Settings</label>
+                <field id="enabled" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Module</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Enable or disable the Ikas import functionality</comment>
+                </field>
+                <field id="batch_size" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Batch Size</label>
+                    <validate>validate-number validate-greater-than-zero</validate>
+                    <comment>Number of products to process in each batch (default: 100)</comment>
+                </field>
+                <field id="category_root" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Default Category Root</label>
+                    <comment>Root category name for imported products (e.g., "İplikler")</comment>
+                </field>
+                <field id="max_execution_time" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Maximum Execution Time</label>
+                    <validate>validate-number validate-greater-than-zero</validate>
+                    <comment>Maximum execution time in seconds (default: 3600)</comment>
+                </field>
+            </group>
+
+            <!-- Attribute Settings -->
+            <group id="attributes" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Attribute Settings</label>
+                <field id="enable_dynamic" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Dynamic Attribute Creation</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Automatically create product attributes from HTML descriptions</comment>
+                </field>
+                <field id="prefix" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Attribute Prefix</label>
+                    <comment>Prefix for dynamically created attributes (default: ikas_)</comment>
+                    <depends>
+                        <field id="enable_dynamic">1</field>
+                    </depends>
+                </field>
+                <field id="group" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Attribute Group Name</label>
+                    <comment>Attribute group for dynamic attributes (default: Ikas Attributes)</comment>
+                    <depends>
+                        <field id="enable_dynamic">1</field>
+                    </depends>
+                </field>
+                <field id="blacklist" translate="label comment" type="textarea" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Blacklisted Attribute Keys</label>
+                    <comment>Comma-separated list of attribute keys to ignore (e.g., "uyarı,not,artikel no")</comment>
+                    <depends>
+                        <field id="enable_dynamic">1</field>
+                    </depends>
+                </field>
+                <field id="min_key_length" translate="label comment" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Minimum Key Length</label>
+                    <validate>validate-number validate-greater-than-zero</validate>
+                    <comment>Minimum length for attribute keys (default: 2)</comment>
+                    <depends>
+                        <field id="enable_dynamic">1</field>
+                    </depends>
+                </field>
+                <field id="max_value_length" translate="label comment" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Maximum Value Length for Varchar</label>
+                    <validate>validate-number validate-greater-than-zero</validate>
+                    <comment>Maximum character length for varchar attributes. Values longer than this will use text type (default: 255)</comment>
+                    <depends>
+                        <field id="enable_dynamic">1</field>
+                    </depends>
+                </field>
+            </group>
+
+            <!-- Stock Settings -->
+            <group id="stock" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Stock Settings</label>
+                <field id="manage_stock" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Manage Stock</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Enable stock management for imported products</comment>
+                </field>
+                <field id="backorders" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Allow Backorders</label>
+                    <source_model>Magento\CatalogInventory\Model\Source\Backorders</source_model>
+                    <comment>Allow backorders for imported products</comment>
+                </field>
+                <field id="use_config_manage_stock" translate="label comment" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Use Config Manage Stock</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Use configuration settings for manage stock</comment>
+                </field>
+                <field id="default_source_code" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Default Source Code (MSI)</label>
+                    <comment>Default source code for Multi Source Inventory (default: default)</comment>
+                </field>
+                <field id="out_of_stock_threshold" translate="label comment" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Out of Stock Threshold</label>
+                    <validate>validate-number</validate>
+                    <comment>Threshold for out of stock status (default: 0)</comment>
+                </field>
+            </group>
+
+            <!-- Image Settings -->
+            <group id="images" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Image Settings</label>
+                <field id="enable_async" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Async Image Processing</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Process images asynchronously using message queue</comment>
+                </field>
+                <field id="queue_connection" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Queue Connection Type</label>
+                    <source_model>Mucan54\IkasImport\Model\Config\Source\QueueConnection</source_model>
+                    <comment>Queue connection type (db or amqp for RabbitMQ)</comment>
+                    <depends>
+                        <field id="enable_async">1</field>
+                    </depends>
+                </field>
+                <field id="image_quality" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Image Quality</label>
+                    <validate>validate-number validate-number-range number-range-1-100</validate>
+                    <comment>Image quality for resizing (1-100, default: 80)</comment>
+                </field>
+                <field id="resize_images" translate="label comment" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Resize Images</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Automatically resize images</comment>
+                </field>
+                <field id="max_images_per_product" translate="label comment" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Maximum Images Per Product</label>
+                    <validate>validate-number validate-greater-than-zero</validate>
+                    <comment>Maximum number of images to import per product (default: 10)</comment>
+                </field>
+                <field id="allowed_extensions" translate="label comment" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Allowed Extensions</label>
+                    <comment>Comma-separated list of allowed image extensions (default: jpg,jpeg,png,gif,webp)</comment>
+                </field>
+                <field id="download_timeout" translate="label comment" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Download Timeout</label>
+                    <validate>validate-number validate-greater-than-zero</validate>
+                    <comment>Timeout for image download in seconds (default: 30)</comment>
+                </field>
+                <field id="clear_existing" translate="label comment" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Clear Existing Images</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Clear existing product images before adding new ones</comment>
+                </field>
+            </group>
+
+            <!-- Category Settings -->
+            <group id="categories" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Category Settings</label>
+                <field id="auto_create" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Auto-create Categories</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Automatically create categories from CSV data</comment>
+                </field>
+                <field id="is_active" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Default Category Active Status</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Default active status for auto-created categories</comment>
+                    <depends>
+                        <field id="auto_create">1</field>
+                    </depends>
+                </field>
+                <field id="include_in_menu" translate="label comment" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Include in Menu</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Include auto-created categories in menu</comment>
+                    <depends>
+                        <field id="auto_create">1</field>
+                    </depends>
+                </field>
+            </group>
+
+            <!-- Validation Settings -->
+            <group id="validation" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Validation Settings</label>
+                <field id="validate_sku_format" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Validate SKU Format</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Validate SKU format (alphanumeric)</comment>
+                </field>
+                <field id="validate_prices" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Validate Prices</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Validate price values and ranges</comment>
+                </field>
+                <field id="validate_urls" translate="label comment" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Validate URLs</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Validate image URL formats</comment>
+                </field>
+                <field id="required_fields" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Required Fields</label>
+                    <comment>Comma-separated list of required fields (default: sku,name,price)</comment>
+                </field>
+                <field id="min_price" translate="label comment" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Minimum Price</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <comment>Minimum allowed price (default: 0.01)</comment>
+                    <depends>
+                        <field id="validate_prices">1</field>
+                    </depends>
+                </field>
+                <field id="max_price" translate="label comment" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Maximum Price</label>
+                    <validate>validate-number validate-greater-than-zero</validate>
+                    <comment>Maximum allowed price (default: 999999.99)</comment>
+                    <depends>
+                        <field id="validate_prices">1</field>
+                    </depends>
+                </field>
+            </group>
+
+            <!-- Advanced Settings -->
+            <group id="advanced" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Advanced Settings</label>
+                <field id="debug_mode" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Debug Mode</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Enable detailed debug logging</comment>
+                </field>
+                <field id="memory_limit" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Memory Limit</label>
+                    <comment>PHP memory limit for import operations (e.g., 512M, 1G)</comment>
+                </field>
+                <field id="clear_cache_after_import" translate="label comment" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Clear Cache After Import</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Automatically clear cache after import</comment>
+                </field>
+                <field id="reindex_after_import" translate="label comment" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Reindex After Import</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Automatically reindex after import</comment>
+                </field>
+                <field id="log_level" translate="label comment" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Log Level</label>
+                    <source_model>Mucan54\IkasImport\Model\Config\Source\LogLevel</source_model>
+                    <comment>Logging level for import operations</comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

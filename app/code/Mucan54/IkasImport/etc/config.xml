@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Mucan54. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <ikas_import>
+            <general>
+                <enabled>1</enabled>
+                <batch_size>100</batch_size>
+                <category_root>İplikler</category_root>
+                <max_execution_time>3600</max_execution_time>
+            </general>
+            <attributes>
+                <enable_dynamic>1</enable_dynamic>
+                <prefix>ikas_</prefix>
+                <group>Ikas Attributes</group>
+                <blacklist>uyarı,not,artikel no,açıklama</blacklist>
+                <min_key_length>2</min_key_length>
+                <max_value_length>255</max_value_length>
+            </attributes>
+            <stock>
+                <manage_stock>1</manage_stock>
+                <backorders>0</backorders>
+                <use_config_manage_stock>0</use_config_manage_stock>
+                <default_source_code>default</default_source_code>
+                <out_of_stock_threshold>0</out_of_stock_threshold>
+            </stock>
+            <images>
+                <enable_async>1</enable_async>
+                <queue_connection>db</queue_connection>
+                <image_quality>80</image_quality>
+                <resize_images>0</resize_images>
+                <max_images_per_product>10</max_images_per_product>
+                <allowed_extensions>jpg,jpeg,png,gif,webp</allowed_extensions>
+                <download_timeout>30</download_timeout>
+                <clear_existing>0</clear_existing>
+            </images>
+            <categories>
+                <auto_create>1</auto_create>
+                <is_active>1</is_active>
+                <include_in_menu>1</include_in_menu>
+            </categories>
+            <validation>
+                <validate_sku_format>1</validate_sku_format>
+                <validate_prices>1</validate_prices>
+                <validate_urls>1</validate_urls>
+                <required_fields>sku,name,price</required_fields>
+                <min_price>0.01</min_price>
+                <max_price>999999.99</max_price>
+            </validation>
+            <advanced>
+                <debug_mode>0</debug_mode>
+                <memory_limit>512M</memory_limit>
+                <clear_cache_after_import>1</clear_cache_after_import>
+                <reindex_after_import>1</reindex_after_import>
+                <log_level>INFO</log_level>
+            </advanced>
+        </ikas_import>
+    </default>
+</config>
