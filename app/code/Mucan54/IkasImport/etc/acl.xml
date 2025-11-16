@@ -12,7 +12,6 @@
             <resource id="Magento_Backend::admin">
                 <resource id="Mucan54_IkasImport::ikas" title="Ikas Import" sortOrder="100">
                     <resource id="Mucan54_IkasImport::import" title="Import Products" sortOrder="10"/>
-                    <resource id="Mucan54_IkasImport::config" title="Configuration" sortOrder="20"/>
                 </resource>
                 <resource id="Magento_Backend::stores">
                     <resource id="Magento_Backend::stores_settings">
