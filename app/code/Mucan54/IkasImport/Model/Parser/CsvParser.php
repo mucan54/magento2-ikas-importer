@@ -111,7 +111,7 @@ class CsvParser implements ParserInterface
             ]);
 
             $rowNumber = 1;
-            while (($data = fgetcsv($handle, 0, ',')) !== false) {
+            while (($data = fgetcsv($handle, 0, ',', '"', '\\')) !== false) {
                 $rowNumber++;
 
                 // Skip empty rows
@@ -206,9 +206,9 @@ class CsvParser implements ParserInterface
         }
 
         // Skip header row
-        fgetcsv($handle);
+        fgetcsv($handle, 0, ',', '"', '\\');
 
-        while (($data = fgetcsv($handle)) !== false) {
+        while (($data = fgetcsv($handle, 0, ',', '"', '\\')) !== false) {
             if (!$this->isEmptyRow($data)) {
                 $count++;
             }
@@ -241,7 +241,7 @@ class CsvParser implements ParserInterface
      */
     private function readHeaders($handle): array
     {
-        $headers = fgetcsv($handle, 0, ',');
+        $headers = fgetcsv($handle, 0, ',', '"', '\\');
         if ($headers === false) {
             return [];
         }
