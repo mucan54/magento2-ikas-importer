@@ -293,10 +293,10 @@ class Importer implements ImporterInterface
 
         // PASS 1: Scan CSV and collect all unique categories and attributes
         foreach ($this->parser->parse($filePath) as $productData) {
-            // Collect categories (comma-separated string)
-            if (!empty($productData['categories'])) {
-                $categories = array_map('trim', explode(',', $productData['categories']));
-                foreach ($categories as $category) {
+            // Collect categories (already parsed as array by CSV parser)
+            if (!empty($productData['categories']) && is_array($productData['categories'])) {
+                foreach ($productData['categories'] as $category) {
+                    $category = trim($category);
                     if ($category !== '') {
                         $allCategories[$category] = true;
                     }
