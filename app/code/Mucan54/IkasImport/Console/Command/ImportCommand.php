@@ -47,7 +47,7 @@ class ImportCommand extends Command
     public function __construct(
         ImporterInterface $importer,
         Logger $logger,
-        string $name = null
+        ?string $name = null
     ) {
         $this->importer = $importer;
         $this->logger = $logger;
