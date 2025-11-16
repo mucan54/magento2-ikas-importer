@@ -16,6 +16,8 @@ use Mucan54\IkasImport\Model\ImportResult;
 use Mucan54\IkasImport\Model\Config\ImportConfig;
 use Mucan54\IkasImport\Model\Queue\Publisher;
 use Mucan54\IkasImport\Model\Logger\Logger;
+use Mucan54\IkasImport\Model\Processor\CategoryProcessor;
+use Mucan54\IkasImport\Model\Processor\AttributeProcessor;
 
 /**
  * Main importer orchestrator
@@ -50,24 +52,40 @@ class Importer implements ImporterInterface
     private $logger;
 
     /**
+     * @var CategoryProcessor
+     */
+    private $categoryProcessor;
+
+    /**
+     * @var AttributeProcessor
+     */
+    private $attributeProcessor;
+
+    /**
      * @param ParserInterface $parser
      * @param ValidatorInterface $validator
      * @param Publisher $publisher
      * @param ImportConfig $config
      * @param Logger $logger
+     * @param CategoryProcessor $categoryProcessor
+     * @param AttributeProcessor $attributeProcessor
      */
     public function __construct(
         ParserInterface $parser,
         ValidatorInterface $validator,
         Publisher $publisher,
         ImportConfig $config,
-        Logger $logger
+        Logger $logger,
+        CategoryProcessor $categoryProcessor,
+        AttributeProcessor $attributeProcessor
     ) {
         $this->parser = $parser;
         $this->validator = $validator;
         $this->publisher = $publisher;
         $this->config = $config;
         $this->logger = $logger;
+        $this->categoryProcessor = $categoryProcessor;
+        $this->attributeProcessor = $attributeProcessor;
     }
 
     /**
@@ -92,6 +110,9 @@ class Importer implements ImporterInterface
                 'file' => $filePath,
                 'config' => $config
             ]);
+
+            // PRE-CREATE all attributes and categories from CSV
+            $this->prepareAttributesAndCategories($filePath);
 
             // Get batch size from config
             $batchSize = $config['batch_size'] ?? $this->config->getBatchSize();
@@ -247,5 +268,124 @@ class Importer implements ImporterInterface
             $validationResult->addError('Validation failed: ' . $e->getMessage());
             return $validationResult;
         }
+    }
+
+    /**
+     * Pre-create all attributes and categories from CSV before import
+     * 
+     * Scans CSV file and creates all dynamic attributes and categories upfront
+     * to prevent "attribute doesn't exist" errors during product save
+     *
+     * @param string $filePath Path to CSV file
+     * @return void
+     */
+    private function prepareAttributesAndCategories(string $filePath): void
+    {
+        if (!$this->config->isDynamicAttributeEnabled()) {
+            $this->logger->logImport('Dynamic attribute creation disabled - skipping pre-creation');
+            return;
+        }
+
+        $this->logger->logImport('Starting pre-creation scan of CSV for attributes and categories');
+
+        $allCategories = [];
+        $allAttributes = [];
+
+        // PASS 1: Scan CSV and collect all unique categories and attributes
+        foreach ($this->parser->parse($filePath) as $productData) {
+            // Collect categories (comma-separated string)
+            if (!empty($productData['categories'])) {
+                $categories = array_map('trim', explode(',', $productData['categories']));
+                foreach ($categories as $category) {
+                    if ($category !== '') {
+                        $allCategories[$category] = true;
+                    }
+                }
+            }
+
+            // Collect all ikas_* attributes
+            foreach ($productData as $key => $value) {
+                if (strpos($key, 'ikas_') === 0 && $value !== '' && $value !== null) {
+                    // Store attribute code with a sample value
+                    if (!isset($allAttributes[$key])) {
+                        $allAttributes[$key] = $value;
+                    }
+                }
+            }
+        }
+
+        $categoryCount = count($allCategories);
+        $attributeCount = count($allAttributes);
+
+        $this->logger->logImport('CSV pre-scan completed', [
+            'unique_categories' => $categoryCount,
+            'unique_attributes' => $attributeCount,
+            'attribute_codes' => array_keys($allAttributes)
+        ]);
+
+        // PASS 2: Create all categories
+        if ($categoryCount > 0) {
+            $this->logger->logImport('Creating categories before product import', [
+                'count' => $categoryCount
+            ]);
+
+            foreach (array_keys($allCategories) as $categoryName) {
+                try {
+                    $this->categoryProcessor->process([
+                        'name' => $categoryName
+                    ]);
+                } catch (\Exception $e) {
+                    $this->logger->logError('Failed to pre-create category', [
+                        'category' => $categoryName,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            $this->logger->logImport('Category pre-creation completed', [
+                'created' => $categoryCount
+            ]);
+        }
+
+        // PASS 3: Create all attributes
+        if ($attributeCount > 0) {
+            $this->logger->logImport('Creating attributes before product import', [
+                'count' => $attributeCount,
+                'attribute_codes' => array_keys($allAttributes)
+            ]);
+
+            $createdCount = 0;
+            foreach ($allAttributes as $attributeCode => $sampleValue) {
+                try {
+                    // Call AttributeProcessor's ensureAttributeExists directly via reflection
+                    // or we can create a dummy product to trigger attribute creation
+                    $dummyProduct = new \Magento\Framework\DataObject();
+                    
+                    $this->attributeProcessor->process([
+                        'product' => $dummyProduct,
+                        'attributes' => [$attributeCode => $sampleValue]
+                    ]);
+                    
+                    $createdCount++;
+                    
+                    $this->logger->logImport('Pre-created attribute', [
+                        'attribute_code' => $attributeCode,
+                        'sample_value' => mb_substr((string)$sampleValue, 0, 50)
+                    ]);
+                } catch (\Exception $e) {
+                    $this->logger->logError('Failed to pre-create attribute', [
+                        'attribute_code' => $attributeCode,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            $this->logger->logImport('Attribute pre-creation completed', [
+                'attempted' => $attributeCount,
+                'created' => $createdCount
+            ]);
+        }
+
+        $this->logger->logImport('Pre-creation phase complete - ready for product import');
     }
 }

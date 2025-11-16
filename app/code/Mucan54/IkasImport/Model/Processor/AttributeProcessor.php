@@ -155,11 +155,15 @@ class AttributeProcessor implements ProcessorInterface
             return false;
         }
 
-        // Create new attribute
+        // Create new attribute  
         try {
             $this->createAttribute($attributeCode, $value);
-            $this->attributeCache->set($attributeCode, true);
-            return true;
+            // Don't cache or return true - attribute is created but not usable in this transaction
+            // Magento needs to reload attribute metadata before it can be used
+            $this->logger->logImport('Attribute created, will be available on next import', [
+                'attribute_code' => $attributeCode
+            ]);
+            return false; // Don't set value on product yet - attribute not loaded
         } catch (\Exception $e) {
             $this->logger->logError('Failed to create attribute', [
                 'attribute_code' => $attributeCode,
