@@ -1,0 +1,65 @@
+{
+    "name": "mucan54/magento2-ikas-importer",
+    "description": "Professional Magento 2 module for importing products from Ikas e-commerce platform with full Turkish language support",
+    "type": "magento2-module",
+    "version": "1.0.0",
+    "license": "MIT",
+    "keywords": [
+        "magento2",
+        "magento",
+        "ikas",
+        "import",
+        "product-import",
+        "csv-import",
+        "turkish",
+        "türkçe",
+        "e-commerce",
+        "ürün-içe-aktarma",
+        "product-importer",
+        "ikas-entegrasyonu",
+        "magento2-module",
+        "magento2-extension"
+    ],
+    "authors": [
+        {
+            "name": "Mucan54",
+            "email": "info@mucan54.com",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "email": "info@mucan54.com",
+        "issues": "https://github.com/mucan54/magento2-ikas-importer/issues",
+        "source": "https://github.com/mucan54/magento2-ikas-importer"
+    },
+    "require": {
+        "php": "^7.4|^8.0|^8.1|^8.2",
+        "magento/framework": "^102.0|^103.0",
+        "magento/module-catalog": "^104.0",
+        "magento/module-catalog-inventory": "^100.4",
+        "magento/module-eav": "^102.1",
+        "magento/module-store": "^101.1",
+        "magento/module-backend": "^102.0"
+    },
+    "suggest": {
+        "magento/module-inventory-api": "For Multi Source Inventory (MSI) support",
+        "magento/module-amqp": "For RabbitMQ queue support and better performance"
+    },
+    "autoload": {
+        "files": [
+            "app/code/Mucan54/IkasImport/registration.php"
+        ],
+        "psr-4": {
+            "Mucan54\\IkasImport\\": "app/code/Mucan54/IkasImport/"
+        }
+    },
+    "extra": {
+        "map": [
+            [
+                "app/code/Mucan54/IkasImport",
+                "app/code/Mucan54/IkasImport"
+            ]
+        ]
+    },
+    "minimum-stability": "stable"
+}

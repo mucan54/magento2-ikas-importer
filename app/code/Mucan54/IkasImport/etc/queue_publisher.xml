@@ -7,6 +7,13 @@
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/publisher.xsd">
+
+    <!-- Product Batch Import Publisher -->
+    <publisher topic="ikas.product.import.batch" disabled="false">
+        <connection name="db" exchange="magento-db" disabled="false"/>
+    </publisher>
+
+    <!-- Image Import Publisher -->
     <publisher topic="ikas.product.images" disabled="false">
         <connection name="db" exchange="magento-db" disabled="false"/>
     </publisher>
