@@ -17,7 +17,7 @@
                 <resource id="Magento_Backend::stores">
                     <resource id="Magento_Backend::stores_settings">
                         <resource id="Magento_Config::config">
-                            <resource id="Mucan54_IkasImport::config" title="Ikas Import Configuration"/>
+                            <resource id="Mucan54_IkasImport::config_section" title="Ikas Import Configuration"/>
                         </resource>
                     </resource>
                 </resource>

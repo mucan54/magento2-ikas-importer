@@ -92,6 +92,9 @@ class ProductProcessor implements ProcessorInterface
     /**
      * @inheritdoc
      */
+    /**
+     * @inheritdoc
+     */
     public function process(array $data, array $context = []): bool
     {
         $sku = $data['sku'] ?? null;
@@ -176,7 +179,7 @@ class ProductProcessor implements ProcessorInterface
 
             // Save product
             $savedProduct = $this->productRepository->save($product);
-            $productId = $savedProduct->getId();
+            $productId = (int)$savedProduct->getId();
 
             $this->logger->logImport('Product saved successfully', [
                 'sku' => $sku,
@@ -184,16 +187,26 @@ class ProductProcessor implements ProcessorInterface
                 'is_new' => $isNew
             ]);
 
-            // Update stock
-            if (isset($data['stock_qty'])) {
-                $this->stockProcessor->process([
+            // Update stock - always process, even if qty is 0 or null
+            if (array_key_exists('stock_qty', $data)) {
+                $stockQty = $data['stock_qty'] ?? 0;
+                $stockResult = $this->stockProcessor->process([
                     'sku' => $sku,
-                    'stock_qty' => $data['stock_qty']
+                    'stock_qty' => $stockQty
+                ]);
+                
+                if (!$stockResult) {
+                    $this->logger->logError('Stock update failed', [
+                        'sku' => $sku,
+                        'stock_qty' => $stockQty
+                    ]);
+                }
+            } else {
+                $this->logger->logImport('No stock_qty in product data', [
+                    'sku' => $sku,
+                    'data_keys' => array_keys($data)
                 ]);
             }
-
-            // Store product ID for image processing
-            $data['product_id'] = $productId;
 
             return true;
 
@@ -205,6 +218,30 @@ class ProductProcessor implements ProcessorInterface
             ]);
             return false;
         }
+    }
+
+    /**
+     * Create or update product and return its ID, or null on failure.
+     * This helper is intended for callers that need the created product id
+     * (for example to enqueue image jobs).
+     *
+     * @param array $data
+     * @return int|null
+     */
+    public function createOrUpdateAndReturnId(array $data): ?int
+    {
+        $result = $this->process($data);
+        if ($result && isset($data['sku'])) {
+            // Try to load created product to get ID
+            try {
+                $product = $this->getProductBySku($data['sku']);
+                return $product ? (int)$product->getId() : null;
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -228,6 +265,22 @@ class ProductProcessor implements ProcessorInterface
     public function supports(string $dataType): bool
     {
         return $dataType === 'product';
+    }
+
+    /**
+     * Return product id by SKU or null if not found
+     *
+     * @param string $sku
+     * @return int|null
+     */
+    public function getProductIdBySku(string $sku): ?int
+    {
+        try {
+            $product = $this->productRepository->get($sku);
+            return $product ? (int)$product->getId() : null;
+        } catch (NoSuchEntityException $e) {
+            return null;
+        }
     }
 
     /**

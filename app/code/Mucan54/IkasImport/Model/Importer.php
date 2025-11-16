@@ -82,8 +82,8 @@ class Importer implements ImporterInterface
         $result->setSuccess(false);
 
         try {
-            // Validate file
-            if (!$this->parser->validate($filePath)) {
+            // Validate file (skip if requested)
+            if (empty($config['skip_validation']) && !$this->parser->validate($filePath)) {
                 $result->addError('Invalid CSV file', ['file' => $filePath]);
                 return $result;
             }
@@ -101,10 +101,26 @@ class Importer implements ImporterInterface
             $totalRows = 0;
             $publishedBatches = 0;
             $validationErrors = 0;
+            $seenSkus = []; // Track SKUs to detect duplicates
+            $duplicateSkus = 0;
 
             // Parse CSV using generator
             foreach ($this->parser->parse($filePath) as $productData) {
                 $totalRows++;
+
+                // Check for duplicate SKUs
+                $sku = $productData['sku'] ?? '';
+                if (isset($seenSkus[$sku])) {
+                    $duplicateSkus++;
+                    $this->logger->logImport('Duplicate SKU detected - skipping', [
+                        'sku' => $sku,
+                        'first_seen_row' => $seenSkus[$sku],
+                        'duplicate_row' => $productData['row_number'] ?? $totalRows,
+                        'stock_qty' => $productData['stock_qty'] ?? 'N/A'
+                    ]);
+                    continue; // Skip duplicate SKUs
+                }
+                $seenSkus[$sku] = $productData['row_number'] ?? $totalRows;
 
                 // Validate product data
                 $validationResult = $this->validator->validate($productData);
@@ -157,6 +173,7 @@ class Importer implements ImporterInterface
                 'total_rows' => $totalRows,
                 'published_batches' => $publishedBatches,
                 'validation_errors' => $validationErrors,
+                'duplicate_skus' => $duplicateSkus,
                 'batch_size' => $batchSize
             ]);
 

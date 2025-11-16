@@ -97,21 +97,29 @@ class AttributeProcessor implements ProcessorInterface
         foreach ($attributes as $attributeCode => $value) {
             try {
                 // Ensure attribute exists
-                $this->ensureAttributeExists($attributeCode, $value);
+                $attributeExists = $this->ensureAttributeExists($attributeCode, $value);
 
-                // Set attribute value on product
-                $product->setData($attributeCode, $value);
+                // Only set attribute value if it exists
+                if ($attributeExists) {
+                    $product->setData($attributeCode, $value);
 
-                $this->logger->debug('Attribute set on product', [
-                    'attribute_code' => $attributeCode,
-                    'value' => mb_substr($value, 0, 50)
-                ]);
+                    $this->logger->logImport('Attribute set on product', [
+                        'attribute_code' => $attributeCode,
+                        'value' => mb_substr($value, 0, 50)
+                    ]);
+                } else {
+                    $this->logger->logImport('Skipping non-existent attribute', [
+                        'attribute_code' => $attributeCode,
+                        'value' => mb_substr($value, 0, 50)
+                    ]);
+                }
 
             } catch (\Exception $e) {
                 $this->logger->logError('Failed to process attribute', [
                     'attribute_code' => $attributeCode,
                     'error' => $e->getMessage()
                 ]);
+                // Continue with next attribute
             }
         }
 
@@ -123,28 +131,42 @@ class AttributeProcessor implements ProcessorInterface
      *
      * @param string $attributeCode
      * @param string $value
-     * @return void
-     * @throws \Exception
+     * @return bool Returns true if attribute exists or was created, false otherwise
      */
-    private function ensureAttributeExists(string $attributeCode, string $value): void
+    private function ensureAttributeExists(string $attributeCode, string $value): bool
     {
         // Check cache first
         if ($this->attributeCache->has($attributeCode)) {
-            return;
+            return true;
         }
 
         // Try to load from repository
         try {
             $this->attributeRepository->get(Product::ENTITY, $attributeCode);
             $this->attributeCache->set($attributeCode, true);
-            return;
+            return true;
         } catch (NoSuchEntityException $e) {
-            // Attribute doesn't exist, create it
+            // Attribute doesn't exist, try to create it
+        } catch (\Exception $e) {
+            $this->logger->logError('Error checking attribute existence', [
+                'attribute_code' => $attributeCode,
+                'error' => $e->getMessage()
+            ]);
+            return false;
         }
 
         // Create new attribute
-        $this->createAttribute($attributeCode, $value);
-        $this->attributeCache->set($attributeCode, true);
+        try {
+            $this->createAttribute($attributeCode, $value);
+            $this->attributeCache->set($attributeCode, true);
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->logError('Failed to create attribute', [
+                'attribute_code' => $attributeCode,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
     }
 
     /**
