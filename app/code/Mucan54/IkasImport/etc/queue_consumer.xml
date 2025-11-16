@@ -7,10 +7,20 @@
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/consumer.xsd">
+
+    <!-- Product Batch Import Consumer (50-item chunks) -->
+    <consumer name="ikas.product.import.batch.consumer"
+              queue="ikas.product.import.batch"
+              connection="db"
+              maxMessages="100"
+              consumerInstance="Magento\Framework\MessageQueue\Consumer"
+              handler="Mucan54\IkasImport\Model\Queue\ProductBatchConsumer::process"/>
+
+    <!-- Image Import Consumer (per product) -->
     <consumer name="ikas.product.images.consumer"
               queue="ikas.product.images"
               connection="db"
-              maxMessages="100"
+              maxMessages="200"
               consumerInstance="Magento\Framework\MessageQueue\Consumer"
               handler="Mucan54\IkasImport\Model\Queue\ImageConsumer::process"/>
 </config>

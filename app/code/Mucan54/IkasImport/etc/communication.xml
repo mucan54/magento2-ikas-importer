@@ -7,5 +7,14 @@
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Communication/etc/communication.xsd">
-    <topic name="ikas.product.images" request="string"/>
+
+    <!-- Product Import Queue Topic (50-item chunks) -->
+    <topic name="ikas.product.import.batch" request="string">
+        <handler name="productBatchHandler" type="Mucan54\IkasImport\Model\Queue\ProductBatchConsumer" method="process"/>
+    </topic>
+
+    <!-- Image Import Queue Topic (per product) -->
+    <topic name="ikas.product.images" request="string">
+        <handler name="imageHandler" type="Mucan54\IkasImport\Model\Queue\ImageConsumer" method="process"/>
+    </topic>
 </config>

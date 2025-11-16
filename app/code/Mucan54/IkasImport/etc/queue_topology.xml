@@ -8,6 +8,16 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/topology.xsd">
     <exchange name="magento-db" type="topic" connection="db">
-        <binding id="ikasImageBinding" topic="ikas.product.images" destinationType="queue" destination="ikas.product.images"/>
+        <!-- Product Batch Import Queue -->
+        <binding id="ikasProductBatchBinding"
+                 topic="ikas.product.import.batch"
+                 destinationType="queue"
+                 destination="ikas.product.import.batch"/>
+
+        <!-- Image Import Queue -->
+        <binding id="ikasImageBinding"
+                 topic="ikas.product.images"
+                 destinationType="queue"
+                 destination="ikas.product.images"/>
     </exchange>
 </config>
